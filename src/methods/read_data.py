@@ -9,8 +9,8 @@ def signal_handler(signal, frame):
 
 if __name__ == "__main__":
     trigno_sensors = TrignoAdapter()
-    trigno_sensors.add_sensors(sensors_mode='EMG', sensors_ids=(4,), sensors_labels=('EMG1',), host='192.168.4.118')
-    trigno_sensors.add_sensors(sensors_mode='ORIENTATION', sensors_ids=(4,), sensors_labels=('ORIENTATION1',), host='192.168.4.118')
+    trigno_sensors.add_sensors(sensors_mode='EMG', sensors_ids=(4,), sensors_labels=('EMG1',), host='150.254.46.37')
+    trigno_sensors.add_sensors(sensors_mode='ORIENTATION', sensors_ids=(4,), sensors_labels=('ORIENTATION1',), host='150.254.46.37')
     trigno_sensors.start_acquisition()
 
     time_period = 1.0 #s
