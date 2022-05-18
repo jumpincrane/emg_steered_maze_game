@@ -1,7 +1,14 @@
 import numpy as np
 import signal as sig
+import pandas as pd
 
-def rms(signal, window=500, stride=100, fs=5120, columns_emg=['EMG_20']):
+def rms(signal:pd.DataFrame, window:int = 500, stride:int = 100, fs:int = 5120, columns_emg:list = ['EMG_20']):
+  """
+  Function that calculates RMS of input signals
+
+  return rms_df: pd.DataFrame - with columns from columns_emg
+  """
+
   t = np.arange(len(signal)) / fs
   signal['t'] = t
   rms = {}
@@ -13,9 +20,17 @@ def rms(signal, window=500, stride=100, fs=5120, columns_emg=['EMG_20']):
 
     rms[ch] = rms_i
 
-    return rms
+  rms_df = pd.DataFrame(data=rms)
 
-def zc(signal, threshold:float=0.1, window:float=500, stride:float=100, fs=5120, columns_emg=['EMG_20']):
+  return rms_df
+
+
+def zc(signal:pd.DataFrame, threshold:float = 0.1, window:float = 500, stride:float = 100, fs:int = 5120, columns_emg:list = ['EMG_20']):
+  """
+  Funcion that calculates zero crossing in signal from positive to negative and from negative to positive
+
+  return zero_crosses_df: pd.DataFrame - of columns from columns_emg
+  """
   zero_crosses = {}
   for ch in columns_emg:
     ch_val = signal[ch].values
@@ -26,7 +41,9 @@ def zc(signal, threshold:float=0.1, window:float=500, stride:float=100, fs=5120,
 
     zero_crosses[ch] = zcs
   # return signal[columns_emg].iloc[int(window/1000*fs)::int(stride/1000*fs)]
-  return zero_crosses 
+  zero_crosses_df = pd.DataFrame(data=zero_crosses)
+
+  return zero_crosses_df 
 
 
 def find_threshold(signal, columns_emg=['EMG_8', 'EMG_9'], column_gesture='TRAJ_GT', idle_gesture_id = 0):
