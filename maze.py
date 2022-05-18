@@ -2,7 +2,8 @@
 
 import pygame
 from pygame.locals import *
-
+from src.pytringos.pytringos import TrignoAdapter
+import time
 
 class Player:
 
@@ -101,6 +102,13 @@ class App:
         self._image_surf = pygame.image.load("img/player.png").convert()
         self._block_surf = pygame.image.load("img/block.png").convert()
         self._exit_surf = pygame.image.load("img/exit.png").convert()
+        self._time_period = 1.0 #s
+
+        self.trigno_sensors = TrignoAdapter()
+        self.trigno_sensors.add_sensors(sensors_mode='EMG', sensors_ids=(4,), sensors_labels=('EMG1',), host='150.254.46.37')
+        self.trigno_sensors.add_sensors(sensors_mode='ORIENTATION', sensors_ids=(4,), sensors_labels=('ORIENTATION1',), host='150.254.46.37')
+        self.trigno_sensors.start_acquisition()
+
 
     def on_event(self, event):
         if event.type == QUIT:
@@ -123,23 +131,32 @@ class App:
             self._running = True
 
         while self._running:
+            time.sleep(self._time_period)
             pygame.event.pump()
-            keys = pygame.key.get_pressed()
+            sensors_reading = self.trigno_sensors.sensors_reading()
+            emg_sig = sensors_reading['EMG'].values
+            # 1. Filtration
+            # 2. RMS
+            # 3. Normalization
+            # 4. Classification of 
 
-            if keys[K_RIGHT]:
-                self.player.move_right(self.maze)
 
-            if keys[K_LEFT]:
-                self.player.move_left(self.maze)
+            # keys = pygame.key.get_pressed()
 
-            if keys[K_UP]:
-                self.player.move_up(self.maze)
+            # if keys[K_RIGHT]:
+            #     self.player.move_right(self.maze)
 
-            if keys[K_DOWN]:
-                self.player.move_down(self.maze)
+            # if keys[K_LEFT]:
+            #     self.player.move_left(self.maze)
 
-            if keys[K_ESCAPE]:
-                self._running = False
+            # if keys[K_UP]:
+            #     self.player.move_up(self.maze)
+
+            # if keys[K_DOWN]:
+            #     self.player.move_down(self.maze)
+
+            # if keys[K_ESCAPE]:
+            #     self._running = False
 
             if self.maze.is_exit(self.player.x, self.player.y):
                 self._running = False
