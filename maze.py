@@ -50,7 +50,7 @@ class Maze:
                      1, 0, 1, 0, 0, 0, 0, 0, 0, 1,
                      1, 0, 1, 0, 1, 1, 1, 1, 0, 1,
                      1, 0, 0, 0, 0, 0, 0, 0, 0, 2,
-                     1, 1, 1, 1, 1, 1False, 1, 1, 1, 1, ]
+                     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, ]
 
     def draw(self, display_surf, image_surf, exit_surf):
         bx = 0
@@ -98,9 +98,9 @@ class App:
 
         pygame.display.set_caption('Maze')
         self._running = True
-        self._image_surf = pygame.image.load("player.png").convert()
-        self._block_surf = pygame.image.load("block.png").convert()
-        self._exit_surf = pygame.image.load("exit.png").convert()
+        self._image_surf = pygame.image.load("img/player.png").convert()
+        self._block_surf = pygame.image.load("img/block.png").convert()
+        self._exit_surf = pygame.image.load("img/exit.png").convert()
 
     def on_event(self, event):
         if event.type == QUIT:
