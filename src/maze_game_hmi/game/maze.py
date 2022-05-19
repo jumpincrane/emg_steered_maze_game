@@ -2,9 +2,9 @@
 
 import pygame
 from pygame.locals import *
-from pytringos.pytringos import TrignoAdapter
+from maze_game_hmi.pytringos.pytringos import TrignoAdapter
 import time
-from utils.utils import *
+from maze_game_hmi.utils.utils import *
 
 class Player:
 
@@ -99,11 +99,11 @@ class App:
         self._window = 500
         self._stride = 100
         self._time_period = 1.0 #s
-
-        self.trigno_sensors = TrignoAdapter()
-        self.trigno_sensors.add_sensors(sensors_mode='EMG', sensors_ids=(4,), sensors_labels=('EMG1',), host='150.254.46.37')
-        self.trigno_sensors.add_sensors(sensors_mode='ORIENTATION', sensors_ids=(4,), sensors_labels=('ORIENTATION1',), host='150.254.46.37')
-        self.trigno_sensors.start_acquisition()
+        # load sensor
+        # self.trigno_sensors = TrignoAdapter()
+        # self.trigno_sensors.add_sensors(sensors_mode='EMG', sensors_ids=(4,), sensors_labels=('EMG1',), host='150.254.46.37')
+        # self.trigno_sensors.add_sensors(sensors_mode='ORIENTATION', sensors_ids=(4,), sensors_labels=('ORIENTATION1',), host='150.254.46.37')
+        # self.trigno_sensors.start_acquisition()
 
 
     def on_init(self):
@@ -111,9 +111,9 @@ class App:
         self._display_surf = pygame.display.set_mode((self.windowWidth, self.windowHeight), pygame.HWSURFACE)
         pygame.display.set_caption('Maze')
         self._running = True
-        self._image_surf = pygame.image.load("img/player.png").convert()
-        self._block_surf = pygame.image.load("img/block.png").convert()
-        self._exit_surf = pygame.image.load("img/exit.png").convert()
+        self._image_surf = pygame.image.load("src/maze_game_hmi/game/img/player.png").convert()
+        self._block_surf = pygame.image.load("src/maze_game_hmi/game/img/block.png").convert()
+        self._exit_surf = pygame.image.load("src/maze_game_hmi/game/img/exit.png").convert()
 
 
     def on_event(self, event):
@@ -137,18 +137,23 @@ class App:
             self._running = True
 
         while self._running:
-            time.sleep(self._time_period)
+            # time.sleep(self._time_period)
             pygame.event.pump()
-            sensors_reading = self.trigno_sensors.sensors_reading()
-            emg_sig = sensors_reading['EMG'].values
-            # 1. Filtration
-            filtered_sig = filter_emg(emg_sig, fs=self._fs, Rs=self._Rs, notch=True)
-            # 2. RMS
-            rms_sig = rms(filtered_sig, window=self._window, stride=self._stride, fs=self._fs)
-            rms_coeff = rms_sig.max()
-            # 3. Normalization
-            norm_emg = normalize_emg(filtered_sig, rms_coeff)
-            # 4. Classification of 
+            # sensors_reading = self.trigno_sensors.sensors_reading()
+            # w sumie to sensorsreading to dataframe, ktory jest caly czas aktualizowany w ten sposob ze na koniec dfa jest
+            # dokladany nowy blok danych wiec ona sie caly czas powieksza czyli rozpatrywanie  calego df nie ma sensu
+            # dobrze byloby zrobic bufor w tym sensie, ze bede brac zawsze ostatnie X probek, gdzie X to bedzie np jakas stala
+            # czyli stride jaki bysmy brali albo w probkach albo w sekundach
+            # DODAC THRESHOLD 
+            # emg_sig = sensors_reading['EMG'].values
+            # # 1. Filtration
+            # filtered_sig = filter_emg(emg_sig, fs=self._fs, Rs=self._Rs, notch=True)
+            # # 2. RMS
+            # rms_sig = rms(filtered_sig, window=self._window, stride=self._stride, fs=self._fs)
+            # rms_coeff = rms_sig.max()
+            # # 3. Normalization
+            # norm_emg = normalize_emg(filtered_sig, rms_coeff)
+            # # 4. Classification of 
 
 
             # keys = pygame.key.get_pressed()

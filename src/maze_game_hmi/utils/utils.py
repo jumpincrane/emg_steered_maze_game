@@ -1,6 +1,7 @@
 import numpy as np
-import signal as sig
+import scipy.signal as sig
 import pandas as pd
+from numpy.lib.stride_tricks import sliding_window_view
 
 def rms(signal:np.ndarray, window:int = 500, stride:int = 100, fs:int = 5120):
   """
@@ -8,12 +9,10 @@ def rms(signal:np.ndarray, window:int = 500, stride:int = 100, fs:int = 5120):
 
   return rms_df: pd.DataFrame - with columns from columns_emg
   """
-
-  rms_i = signal ** 2
-  rms_i = np.sqrt(rms_i.rolling(int(window/1000*fs)).mean())
+  xc = np.cumsum(abs(signal)**2)
+  rms_i = np.sqrt((xc[window:] - xc[:-window]) / window)
 
   return rms_i
-
 
 def zc(signal:np.ndarray, threshold:float = 0.1, window:float = 500, stride:float = 100, fs:int = 5120):
   """
