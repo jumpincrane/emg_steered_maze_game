@@ -2,9 +2,9 @@
 
 import pygame
 from pygame.locals import *
-from maze_game_hmi.pytringos.pytringos import TrignoAdapter
+from pytringos.pytringos import TrignoAdapter
 import time
-from maze_game_hmi.utils.utils import *
+from utils.utils import *
 
 class Player:
 
