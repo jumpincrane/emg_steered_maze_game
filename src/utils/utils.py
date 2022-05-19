@@ -82,18 +82,18 @@ def subsample_emg(signal_filtered:np.ndarray, fs:int = 500, r:int = 3, Rs:int = 
 
 def filter_force(signal, fs):
   """
-  Filter network noises
+  Smooth sig
   """
   signal_filtered = sig.medfilt(signal)
 
   return signal_filtered, signal_filtered
 
 
-def norm_emg(signal: np.ndarray, norm_coeff: int):
+def normalize_emg(signal: np.ndarray, norm_coeff: int):
   """
   Normalize signal 
   """
-  
+
   norm_sig =  signal / norm_coeff
 
   return norm_sig

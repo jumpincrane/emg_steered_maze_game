@@ -4,6 +4,7 @@ import pygame
 from pygame.locals import *
 from src.pytringos.pytringos import TrignoAdapter
 import time
+from src.utils.utils import *
 
 class Player:
 
@@ -93,21 +94,26 @@ class App:
         self.player = Player()
         self.maze = Maze()
 
-    def on_init(self):
-        pygame.init()
-        self._display_surf = pygame.display.set_mode((self.windowWidth, self.windowHeight), pygame.HWSURFACE)
-
-        pygame.display.set_caption('Maze')
-        self._running = True
-        self._image_surf = pygame.image.load("img/player.png").convert()
-        self._block_surf = pygame.image.load("img/block.png").convert()
-        self._exit_surf = pygame.image.load("img/exit.png").convert()
+        self._fs = 500
+        self._Rs = 50
+        self._window = 500
+        self._stride = 100
         self._time_period = 1.0 #s
 
         self.trigno_sensors = TrignoAdapter()
         self.trigno_sensors.add_sensors(sensors_mode='EMG', sensors_ids=(4,), sensors_labels=('EMG1',), host='150.254.46.37')
         self.trigno_sensors.add_sensors(sensors_mode='ORIENTATION', sensors_ids=(4,), sensors_labels=('ORIENTATION1',), host='150.254.46.37')
         self.trigno_sensors.start_acquisition()
+
+
+    def on_init(self):
+        pygame.init()
+        self._display_surf = pygame.display.set_mode((self.windowWidth, self.windowHeight), pygame.HWSURFACE)
+        pygame.display.set_caption('Maze')
+        self._running = True
+        self._image_surf = pygame.image.load("img/player.png").convert()
+        self._block_surf = pygame.image.load("img/block.png").convert()
+        self._exit_surf = pygame.image.load("img/exit.png").convert()
 
 
     def on_event(self, event):
@@ -136,8 +142,12 @@ class App:
             sensors_reading = self.trigno_sensors.sensors_reading()
             emg_sig = sensors_reading['EMG'].values
             # 1. Filtration
+            filtered_sig = filter_emg(emg_sig, fs=self._fs, Rs=self._Rs, notch=True)
             # 2. RMS
+            rms_sig = rms(filtered_sig, window=self._window, stride=self._stride, fs=self._fs)
+            rms_coeff = rms_sig.max()
             # 3. Normalization
+            norm_emg = normalize_emg(filtered_sig, rms_coeff)
             # 4. Classification of 
 
 
@@ -160,6 +170,7 @@ class App:
 
             if self.maze.is_exit(self.player.x, self.player.y):
                 self._running = False
+                self.trigno_sensors.stop_acquisition()
 
             self.on_loop()
             self.on_render()
