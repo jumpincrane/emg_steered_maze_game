@@ -9,7 +9,7 @@ def rms(signal:np.ndarray, window:int = 500, stride:int = 100, fs:int = 5120):
 
   return rms_df: pd.DataFrame - with columns from columns_emg
   """
-  xc = np.cumsum(abs(signal)**2)
+  xc = np.cumsum(np.abs(signal)**2)
   rms_i = np.sqrt((xc[window:] - xc[:-window]) / window)
 
   return rms_i
@@ -49,10 +49,10 @@ def filter_emg(signal:np.ndarray, fs:int = 500, Rs:int = 50, notch:bool = True):
   """
 
   width = 4 / (0.5 * fs)
-  cutoff = 15
+  cutoff = 15 /(0.5*fs)
   numtaps, beta = sig.kaiserord(ripple=Rs, width=width)
   # high pass from 0 to cutoff
-  w = sig.firwin(numtaps=numtaps+1, cutoff=cutoff, window=('kaiser', beta), pass_zero='highpass', fs=fs)
+  w = sig.firwin(numtaps=numtaps, cutoff=cutoff, window=('kaiser', beta), pass_zero='highpass', fs=fs)
   
   signal_filtered = sig.lfilter(w, 1, signal)
   signal_filtered_zero_ph = sig.filtfilt(w, 1, signal)
@@ -96,3 +96,5 @@ def normalize_emg(signal: np.ndarray, norm_coeff: int):
   norm_sig =  signal / norm_coeff
 
   return norm_sig
+
+  
