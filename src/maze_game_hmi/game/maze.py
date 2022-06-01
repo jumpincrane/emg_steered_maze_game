@@ -1,5 +1,6 @@
 #The code was adapted from https://pythonspot.com/maze-in-pygame/
 
+from shutil import move
 import pygame
 from pygame.locals import *
 from maze_game_hmi.pytringos.pytringos import TrignoAdapter
@@ -12,7 +13,7 @@ class Player:
     def __init__(self):
         self.x = 44
         self.y = 44
-        self.speed = 0.05
+        self.speed = 1.0
 
     def move_right(self, maze):
         b_x = self.x + self.speed
@@ -95,7 +96,7 @@ class App:
         self.player = Player()
         self.maze = Maze()
 
-        self._fs = 100
+        self._fs = 1920
         self._Rs = 50
         self._window = 500
         self._stride = 100
@@ -103,7 +104,7 @@ class App:
         self._sensor_data = pd.DataFrame({})
         # load sensor
         self.trigno_sensors = TrignoAdapter()
-        self.trigno_sensors.add_sensors(sensors_mode='EMG', sensors_ids=(7,), sensors_labels=('EMG1',), host='150.254.46.37')
+        self.trigno_sensors.add_sensors(sensors_mode='EMG', sensors_ids=(6,), sensors_labels=('EMG1',), host='150.254.46.37')
         # self.trigno_sensors.add_sensors(sensors_mode='ORIENTATION', sensors_ids=(7,), sensors_labels=('ORIENTATION1',), host='150.254.46.37')
         self.trigno_sensors.start_acquisition()
 
@@ -137,61 +138,72 @@ class App:
     def on_execute(self):
         if not self.on_init():
             self._running = True
-        iter = 0
+
+        # CALCULATE MAX CONTRACTION
+        samples = 0
+        data_rms = pd.DataFrame({})
+        while samples < 12000:
+            first_sensor = self.trigno_sensors.sensors_reading()
+            data_rms = data_rms.append(first_sensor, ignore_index=True)
+            samples = len(data_rms)
+
+        emg_sig_rms = data_rms['EMG'].values
+        if len(emg_sig_rms) % 2 == 0:
+            emg_sig_rms = np.append(emg_sig_rms, emg_sig_rms[-1])
+        emg_sig_rms = emg_sig_rms.astype(np.float32)
+        # filter
+        filtered_sig_rms, filtered_sig_zero_ph = filter_emg(emg_sig_rms, fs=self._fs, Rs=self._Rs, notch=True)
+
+        window = len(emg_sig_rms)
+        rms_sig = rms(filtered_sig_rms, window=int(window * 0.01), stride=self._stride, fs=self._fs)
+        rms_coeff = rms_sig.max()
+        norm_emg_rms = normalize_emg(filtered_sig_rms, rms_coeff)
+        max_cond = norm_emg_rms.max()
+        
+        iter = 0 
+
         while self._running:
             time.sleep(self._time_period)
             pygame.event.pump()
             sensors_reading = self.trigno_sensors.sensors_reading()
             self._sensor_data = self._sensor_data.append(sensors_reading, ignore_index=True)
-    
-                
+            
             emg_sig = self._sensor_data['EMG'].values
 
-            # # 1. Filtration
 
+            # 1. Filtration
             if len(emg_sig) % 2 == 0:
                 emg_sig = np.append(emg_sig, emg_sig[-1])
             emg_sig = emg_sig.astype(np.float32)
 
-            filtered_sig, filtered_sig_zero_ph = filter_emg(emg_sig, fs=self._fs, Rs=self._Rs, notch=True)
-            # # # 2. RMS
-            window = len(emg_sig)
-            rms_sig = rms(filtered_sig, window=int(window * 0.1), stride=self._stride, fs=self._fs)
-            rms_coeff = rms_sig.max()
-            # # # 3. Normalization
+            filtered_sig, filtered_sig_zero_ph = filter_emg(emg_sig, fs=120, Rs=self._Rs, notch=True)
+            # 3. Normalization
             norm_emg = normalize_emg(filtered_sig, rms_coeff)
-            # # 4. Classification of 
+            # 4. Classification of 
             abs_emg = np.abs(norm_emg)
-            idle = abs_emg[abs_emg < (0.3 * rms_coeff)]
-            middle = abs_emg[(abs_emg >= (0.3 * rms_coeff)) & (abs_emg < (0.55 * rms_coeff))]
-            high = abs_emg[(abs_emg <= rms_coeff) & (abs_emg >= (0.55 * rms_coeff))]
-            print(len(idle))
-            print(len(middle))
-            print(len(high))
+            idle = abs_emg[abs_emg < (0.2 * max_cond)]
+            middle = abs_emg[(abs_emg >= (0.2 * max_cond)) & (abs_emg < (0.35 * max_cond))]
+            high = abs_emg[(abs_emg <= max_cond) & (abs_emg >= (0.35 * max_cond))]
 
-
+  
+            classif = [len(middle), len(high)]
+            print(len(idle), classif)
             # keys = pygame.key.get_pressed()
+            movearg = np.argmax(classif)
+            if movearg == 0 and classif[movearg] > 10:
+                self.player.move_right(self.maze)
 
-            # if keys[K_RIGHT]:
-            #     self.player.move_right(self.maze)
+            if movearg == 1 and classif[movearg] > 10:
+                self.player.move_left(self.maze)
 
-            # if keys[K_LEFT]:
-            #     self.player.move_left(self.maze)
 
-            # if keys[K_UP]:
-            #     self.player.move_up(self.maze)
-
-            # if keys[K_DOWN]:
-            #     self.player.move_down(self.maze)
-
-            # if keys[K_ESCAPE]:
-            #     self._running = False
             
             if self.maze.is_exit(self.player.x, self.player.y):
                 self._running = False
                 self.trigno_sensors.stop_acquisition()
 
-            self._sensor_data.drop(self._sensor_data.head(1045).index, inplace=True)
+            self._sensor_data.drop(self._sensor_data.head(len(emg_sig)).index, inplace=True)
+            iter += 1
             self.on_loop()
             self.on_render()
         self.on_cleanup()
