@@ -5,7 +5,7 @@ A simple MazeGame that involves walking left, right based on a muscle contractio
 The package integrates the game interface, reading and filtering/normalizing the signal then properly classifying what kind of movement it is.
 
 ```
-git clone https://github.com/jumpincrane/HMI-EMG-game.git
-cd HMI-EMG-game
+git clone https://github.com/jumpincrane/emg_steered_maze_game.git
+cd emg_steered_maze_game
 pip install .
 ```
