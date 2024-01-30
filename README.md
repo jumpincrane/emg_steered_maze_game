@@ -7,5 +7,5 @@ The package integrates the game interface, reading and filtering/normalizing the
 ```
 git clone https://github.com/jumpincrane/HMI-EMG-game.git
 cd HMI-EMG-game
-pip install -e .
+pip install .
 ```
